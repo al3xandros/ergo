@@ -7,6 +7,7 @@ package main
 
 import (
 	"bufio"
+	"embed"
 	"fmt"
 	"log"
 	"os"
@@ -25,6 +26,9 @@ import (
 // set via linker flags, either by make or by goreleaser:
 var commit = ""  // git hash
 var version = "" // tagged version
+
+//go:embed default.yaml traditional.yaml
+var configFS embed.FS
 
 // get a password from stdin from the user
 func getPasswordFromTerminal() string {
@@ -94,6 +98,7 @@ Usage:
 	ergo importdb <database.json> [--conf <filename>] [--quiet]
 	ergo genpasswd [--conf <filename>] [--quiet]
 	ergo mkcerts [--conf <filename>] [--quiet]
+	ergo genconfig [--traditional]
 	ergo run [--conf <filename>] [--quiet] [--smoke]
 	ergo -h | --help
 	ergo --version
@@ -135,6 +140,17 @@ Options:
 		return
 	} else if arguments["mkcerts"].(bool) {
 		doMkcerts(arguments["--conf"].(string), arguments["--quiet"].(bool))
+		return
+	} else if arguments["genconfig"].(bool) {
+		name := "default.yaml"
+		if arguments["--traditional"].(bool) {
+			name = "traditional.yaml"
+		}
+		configFile, err := configFS.ReadFile(name)
+		if err != nil {
+			log.Fatal("error while generating default configuraion:", err.Error())
+		}
+		fmt.Print(string(configFile))
 		return
 	}
 
